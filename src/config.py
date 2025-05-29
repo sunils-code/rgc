@@ -15,6 +15,7 @@ def load_config():
     db_file = os.path.join(base_dir, config["db_file"])
 
     companies_file = os.path.join(data_dir, config["files"]["companies"])
+    people_folder = os.path.join(data_dir, config["files"]["people_folder"])
     
 
     # format the SQLite URI using the path
@@ -26,6 +27,7 @@ def load_config():
         "DB_FILE": db_file,
         "COMPANIES_FILE": companies_file,
         "SQLITE_URI": sqlite_uri,
+        "PEOPLE_FOLDER": people_folder
     }
 
 # load config

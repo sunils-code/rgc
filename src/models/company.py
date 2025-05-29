@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from models import Base
+from sqlalchemy.orm import relationship
 
 class Company(Base):
     __tablename__ = "companies"
@@ -15,5 +14,9 @@ class Company(Base):
     state = Column(String)
     zip = Column(String)
     formed = Column(Date)
+
+    # create one to many relation ship with persom
+    # if a company is deleted all people linked are removed
+    people = relationship("Person", back_populates="company", cascade="all, delete-orphan")
 
 

@@ -3,6 +3,7 @@ db_file: "rgc_data.db"
 
 files:
   companies: "companies/companies.csv"
+  people_folder: "people"
 
 database:
   sqlite_uri_template: "sqlite:///{db_file}"
