@@ -1,9 +1,44 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import config
-from models import Base, Company, Person
-from processing import CompanyLoader, PeopleLoader
+from models import Base, Company, Person, Market
+from processing import CompanyLoader, PeopleLoader, MarketDataLoader
 import pandas as pd
+import time
+
+
+def load_market_data(session):
+
+    # load and clean market data
+    loader = MarketDataLoader(config["MARKET_DATA_FOLDER"])
+    market_data_df = loader.read()
+    market_data_df = loader.clean(market_data_df)
+
+    market_data_rows = []
+
+    for _, row in market_data_df.iterrows():
+
+        company = session.query(Company).filter_by(figi=row["figi"]).first()
+
+        # if company doesnt exist skip rows and print details of row skipped
+        if not company:
+            print(f'skipping person, figi: {row["figi"]} not found')
+            continue
+
+        market_data = Market(
+            date = pd.to_datetime(row["date"]).date(),
+            figi = row["figi"],
+            last_price = row["last_price"],
+            company_id = company.id       
+        )
+
+        market_data_rows.append(market_data)
+
+    # add into sqlite db
+    session.add_all(market_data_rows)
+    session.commit()
+    print(f"{len(market_data_rows)} market data rows loaded")
+
 
 def load_companies(session):
 
@@ -87,7 +122,10 @@ def main():
     # call load data function to write to sqlite db
     load_companies(session)
     load_people(session)
-
+    start = time.time()
+    load_market_data(session)
+    end = time.time()
+    print(f"Market data loaded in {end - start:.2f} seconds")
    
 
 if __name__ == "__main__":

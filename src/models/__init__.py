@@ -3,3 +3,4 @@ Base = declarative_base()
 
 from .company import Company
 from .person import Person
+from .market import Market

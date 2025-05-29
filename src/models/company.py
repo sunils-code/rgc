@@ -19,4 +19,8 @@ class Company(Base):
     # if a company is deleted all people linked are removed
     people = relationship("Person", back_populates="company", cascade="all, delete-orphan")
 
+    # create one to many relation ship with market
+    # if a company is deleted all market data linked are removed
+    market = relationship("Market", back_populates="company", cascade="all, delete-orphan")
+
 
