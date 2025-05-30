@@ -40,10 +40,6 @@ class FinancialStatementLoader(BaseLoader):
                 
         return financial_statements
 
-
-    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
-        pass
-
     def load(self, session) -> None:
 
         # load and clean market data

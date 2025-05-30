@@ -37,16 +37,11 @@ class PeopleLoader(BaseLoader):
                     people_records.append(person)
 
         return pd.DataFrame(people_records)
-    
 
-    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
-        # No cleaning needed
-        return df
     
     def load(self, session) -> None:
      
         people_df = self.read()
-        people_df = self.clean(people_df)
 
         people = []
 

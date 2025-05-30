@@ -26,10 +26,6 @@ class CompanyLoader(BaseLoader):
             parse_dates=parse_dates
             )
 
-    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
-        # No cleaning needed
-        return df
-
     def load(self, session) -> None:
         # load and clean companies data
         comapny_df = self.read()

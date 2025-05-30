@@ -3,16 +3,19 @@ import yaml
 
 def load_config():
     # load yaml
-    with open("config.yaml", "r") as f:
+    # directory of file
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, "config.yaml")
+
+    with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    # get base directory of file
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    #print(base_dir)
+    # get project root
+    project_root = os.path.abspath(os.path.join(base_dir, ".."))
 
     # create full paths
-    data_dir = os.path.join(base_dir, config["data_dir"])
-    db_file = os.path.join(base_dir, config["db_file"])
+    data_dir = os.path.join(project_root, config["data_dir"])
+    db_file = os.path.join(project_root, config["db_file"])
 
     companies_file = os.path.join(data_dir, config["files"]["companies"])
     people_folder = os.path.join(data_dir, config["files"]["people_folder"])
@@ -23,7 +26,7 @@ def load_config():
     sqlite_uri = config["database"]["sqlite_uri_template"].format(db_file=db_file)
 
     return {
-        "BASE_DIR": base_dir,
+        "BASE_DIR": project_root,
         "DATA_DIR": data_dir,
         "DB_FILE": db_file,
         "COMPANIES_FILE": companies_file,

@@ -13,7 +13,7 @@ class BaseLoader(ABC):
         """load the raw data from the file"""
         pass
 
-    @abstractmethod
+    
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
         """clean the raw DataFrame"""
         pass
