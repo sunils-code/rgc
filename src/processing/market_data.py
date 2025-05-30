@@ -10,6 +10,7 @@
 from processing import BaseLoader
 import pandas as pd
 import os
+from models import Market, Company
 
 
 class MarketDataLoader(BaseLoader):
@@ -53,4 +54,34 @@ class MarketDataLoader(BaseLoader):
         market_data_T = market_data_T.dropna(subset=['last_price'])
         
         return market_data_T
+       
+    def load(self, session) -> None:
+        # load and clean market data
+        market_data_df = self.read()
+        market_data_df = self.clean(market_data_df)
+
+        market_data_rows = []
+
+        for _, row in market_data_df.iterrows():
+
+            company = session.query(Company).filter_by(figi=row["figi"]).first()
+
+            # if company doesnt exist skip rows and print details of row skipped
+            if not company:
+                print(f'skipping person, figi: {row["figi"]} not found')
+                continue
+
+            market_data = Market(
+                date = pd.to_datetime(row["date"]).date(),
+                figi = row["figi"],
+                last_price = row["last_price"],
+                company_id = company.id       
+            )
+
+            market_data_rows.append(market_data)
+
+        # add into sqlite db
+        session.add_all(market_data_rows)
+        session.commit()
+        print(f"{len(market_data_rows)} market data rows loaded")
     

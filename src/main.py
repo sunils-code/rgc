@@ -1,152 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import config
-from models import Base, Company, Person, Market, FinancialStatement
+from models import Base
 from processing import CompanyLoader, PeopleLoader, MarketDataLoader, FinancialStatementLoader
-import pandas as pd
 import time
-
-def load_financial_statements(session):
-    
-    # load and clean market data
-    loader = FinancialStatementLoader(config["FINANCIAL_STATEMENT_FOLDER"])
-    financial_statement_df = loader.read()
-
-    all_statements = []
-
-    for s in financial_statement_df:
-
-        company = session.query(Company).filter_by(name=s["company_name"]).first()
-
-        # if company doesnt exist skip rows and print details of row skipped
-        if not company:
-            print(f'skipping statement, company name: {s["company_name"]} not found')
-            continue
-
-        financial_statement = FinancialStatement(
-            quarter = s.get("quarter"),
-            revenue = s.get("revenue"),
-            expenses = s.get("expenses"),
-            net_income = s.get("net_income"),
-            assets = s.get("assets"),
-            liabilities = s.get("liabilities"),
-            equity = s.get("equity"),
-            cash = s.get("cash"),
-            debt = s.get("debt"),
-            equity_ratio = s.get("equity_ratio"),
-            debt_ratio = s.get("debt_ratio"),
-            company_id = company.id,
-        )
-
-        all_statements.append(financial_statement)
-
-    # add into sqlite db
-    session.add_all(all_statements)
-    session.commit()
-    print(f"{len(all_statements)} financial statement data rows loaded")
-
-def load_market_data(session):
-
-    # load and clean market data
-    loader = MarketDataLoader(config["MARKET_DATA_FOLDER"])
-    market_data_df = loader.read()
-    market_data_df = loader.clean(market_data_df)
-
-    market_data_rows = []
-
-    for _, row in market_data_df.iterrows():
-
-        company = session.query(Company).filter_by(figi=row["figi"]).first()
-
-        # if company doesnt exist skip rows and print details of row skipped
-        if not company:
-            print(f'skipping person, figi: {row["figi"]} not found')
-            continue
-
-        market_data = Market(
-            date = pd.to_datetime(row["date"]).date(),
-            figi = row["figi"],
-            last_price = row["last_price"],
-            company_id = company.id       
-        )
-
-        market_data_rows.append(market_data)
-
-    # add into sqlite db
-    session.add_all(market_data_rows)
-    session.commit()
-    print(f"{len(market_data_rows)} market data rows loaded")
-
-
-def load_companies(session):
-
-     # load and clean companies data
-    loader = CompanyLoader(config["COMPANIES_FILE"])
-    comapny_df = loader.read()
-    comapny_df = loader.clean(comapny_df)
-
-    # for each row in df instantiate company model
-    companies = [
-        Company(
-            name=row["name"],
-            figi=row["figi"],
-            lei=row["lei"],
-            address=row["address"],
-            city=row["city"],
-            state=row["state"],
-            zip=row["zip"],
-            formed=row["formed"].date() if pd.notnull(row["formed"]) else None
-        )
-        for _, row in comapny_df.iterrows()
-    ]
-
-    # add into sqlite db
-    session.add_all(companies)
-    session.commit()
-    print(f"{len(companies)} companies loaded")
-
-def load_people(session):
-
-    loader = PeopleLoader(config["PEOPLE_FOLDER"])
-    people_df = loader.read()
-    people_df = loader.clean(people_df)
-
-    people = []
-
-    for _, row in people_df.iterrows():
-        
-        # json files contain either figi or lei or both, cater for edge case. prioritise figi, if not present take lei
-        if row["figi"] is None:
-            company = session.query(Company).filter_by(lei=row["lei"]).first()
-        else:
-            company = session.query(Company).filter_by(figi=row["figi"]).first()
-
-        # if company doesnt exist skip rows and print details of row skipped
-        if not company:
-            print(f'skipping person, company: {row["company"]} , name: {row["name"]} , figi: {row["figi"]} , lei: {row["lei"]} not found')
-            continue
-
-        # creating person objects for each row 
-
-        person = Person(
-            name = row["name"],
-            email = row["email"],
-            address = row["address"],
-            sex = row["sex"],
-            ssn = row["ssn"],
-            title = row["title"],
-            appointed = pd.to_datetime(row["appointed"]).date(),
-            company_id = company.id
-            )
-        
-        people.append(person)
-
-    
-    # add into sqlite db
-    session.add_all(people)
-    session.commit()
-    print(f"{len(people)} people loaded")
-
 
 def main():
     # create db engine and schema
@@ -158,16 +15,16 @@ def main():
     session = Session()
 
     # call load data function to write to sqlite db
-    load_companies(session)
-    load_people(session)
+    CompanyLoader(config["COMPANIES_FILE"]).load(session)
+    PeopleLoader(config["PEOPLE_FOLDER"]).load(session)
 
     start = time.time()
-    load_market_data(session)
+    MarketDataLoader(config["MARKET_DATA_FOLDER"]).load(session)
     end = time.time()
     print(f"Market data loaded in {end - start:.2f} seconds")
 
     start = time.time()
-    load_financial_statements(session)
+    FinancialStatementLoader(config["FINANCIAL_STATEMENT_FOLDER"]).load(session)
     end = time.time()
     print(f"Financial data loaded in {end - start:.2f} seconds")
 

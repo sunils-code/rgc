@@ -1,5 +1,6 @@
 import pandas as pd
 from processing import BaseLoader
+from models import Company
 
 class CompanyLoader(BaseLoader):
 
@@ -28,3 +29,27 @@ class CompanyLoader(BaseLoader):
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
         # No cleaning needed
         return df
+
+    def load(self, session) -> None:
+        # load and clean companies data
+        comapny_df = self.read()
+
+        # for each row in df instantiate company model
+        companies = [
+            Company(
+                name=row["name"],
+                figi=row["figi"],
+                lei=row["lei"],
+                address=row["address"],
+                city=row["city"],
+                state=row["state"],
+                zip=row["zip"],
+                formed=row["formed"].date() if pd.notnull(row["formed"]) else None
+            )
+            for _, row in comapny_df.iterrows()
+    ]
+
+        # add into sqlite db
+        session.add_all(companies)
+        session.commit()
+        print(f"{len(companies)} companies loaded")

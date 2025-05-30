@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import pandas as pd
+from sqlalchemy.orm import Session
 
 class BaseLoader(ABC):
 
@@ -15,4 +16,9 @@ class BaseLoader(ABC):
     @abstractmethod
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
         """clean the raw DataFrame"""
+        pass
+
+    @abstractmethod
+    def load(self, session: Session) -> None:
+        """Load data to sqlite"""
         pass

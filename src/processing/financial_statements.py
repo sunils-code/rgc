@@ -1,6 +1,7 @@
 from processing import BaseLoader
 import pandas as pd
 import os
+from models import Company, FinancialStatement
 
 class FinancialStatementLoader(BaseLoader):
 
@@ -42,3 +43,41 @@ class FinancialStatementLoader(BaseLoader):
 
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
         pass
+
+    def load(self, session) -> None:
+
+        # load and clean market data
+        financial_statement_df = self.read()
+
+        all_statements = []
+
+        for s in financial_statement_df:
+
+            company = session.query(Company).filter_by(name=s["company_name"]).first()
+
+            # if company doesnt exist skip rows and print details of row skipped
+            if not company:
+                print(f'skipping statement, company name: {s["company_name"]} not found')
+                continue
+
+            financial_statement = FinancialStatement(
+                quarter = s.get("quarter"),
+                revenue = s.get("revenue"),
+                expenses = s.get("expenses"),
+                net_income = s.get("net_income"),
+                assets = s.get("assets"),
+                liabilities = s.get("liabilities"),
+                equity = s.get("equity"),
+                cash = s.get("cash"),
+                debt = s.get("debt"),
+                equity_ratio = s.get("equity_ratio"),
+                debt_ratio = s.get("debt_ratio"),
+                company_id = company.id,
+            )
+
+            all_statements.append(financial_statement)
+
+        # add into sqlite db
+        session.add_all(all_statements)
+        session.commit()
+        print(f"{len(all_statements)} financial statement data rows loaded")
