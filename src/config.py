@@ -17,6 +17,7 @@ def load_config():
     companies_file = os.path.join(data_dir, config["files"]["companies"])
     people_folder = os.path.join(data_dir, config["files"]["people_folder"])
     market_folder = os.path.join(data_dir, config["files"]["market_data_folder"])
+    financial_statement_folder = os.path.join(data_dir, config["files"]["financial_statement_folder"])
 
     # format the SQLite URI using the path
     sqlite_uri = config["database"]["sqlite_uri_template"].format(db_file=db_file)
@@ -28,7 +29,8 @@ def load_config():
         "COMPANIES_FILE": companies_file,
         "SQLITE_URI": sqlite_uri,
         "PEOPLE_FOLDER": people_folder,
-        "MARKET_DATA_FOLDER": market_folder
+        "MARKET_DATA_FOLDER": market_folder,
+        "FINANCIAL_STATEMENT_FOLDER": financial_statement_folder
     }
 
 # load config

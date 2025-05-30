@@ -1,11 +1,49 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import config
-from models import Base, Company, Person, Market
-from processing import CompanyLoader, PeopleLoader, MarketDataLoader
+from models import Base, Company, Person, Market, FinancialStatement
+from processing import CompanyLoader, PeopleLoader, MarketDataLoader, FinancialStatementLoader
 import pandas as pd
 import time
 
+def load_financial_statements(session):
+    
+    # load and clean market data
+    loader = FinancialStatementLoader(config["FINANCIAL_STATEMENT_FOLDER"])
+    financial_statement_df = loader.read()
+
+    all_statements = []
+
+    for s in financial_statement_df:
+
+        company = session.query(Company).filter_by(name=s["company_name"]).first()
+
+        # if company doesnt exist skip rows and print details of row skipped
+        if not company:
+            print(f'skipping statement, company name: {s["company_name"]} not found')
+            continue
+
+        financial_statement = FinancialStatement(
+            quarter = s.get("quarter"),
+            revenue = s.get("revenue"),
+            expenses = s.get("expenses"),
+            net_income = s.get("net_income"),
+            assets = s.get("assets"),
+            liabilities = s.get("liabilities"),
+            equity = s.get("equity"),
+            cash = s.get("cash"),
+            debt = s.get("debt"),
+            equity_ratio = s.get("equity_ratio"),
+            debt_ratio = s.get("debt_ratio"),
+            company_id = company.id,
+        )
+
+        all_statements.append(financial_statement)
+
+    # add into sqlite db
+    session.add_all(all_statements)
+    session.commit()
+    print(f"{len(all_statements)} financial statement data rows loaded")
 
 def load_market_data(session):
 
@@ -122,11 +160,16 @@ def main():
     # call load data function to write to sqlite db
     load_companies(session)
     load_people(session)
+
     start = time.time()
     load_market_data(session)
     end = time.time()
     print(f"Market data loaded in {end - start:.2f} seconds")
-   
+
+    start = time.time()
+    load_financial_statements(session)
+    end = time.time()
+    print(f"Financial data loaded in {end - start:.2f} seconds")
 
 if __name__ == "__main__":
     main()

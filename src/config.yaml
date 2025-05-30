@@ -5,6 +5,7 @@ files:
   companies: "companies/companies.csv"
   people_folder: "people"
   market_data_folder: "market_data"
+  financial_statement_folder: "financial_statements"
 
 database:
   sqlite_uri_template: "sqlite:///{db_file}"

@@ -23,4 +23,6 @@ class Company(Base):
     # if a company is deleted all market data linked are removed
     market = relationship("Market", back_populates="company", cascade="all, delete-orphan")
 
-
+    # create one to many relation ship with financial statement
+    # if a company is deleted all market data linked are removed
+    financial_statements = relationship("FinancialStatement", back_populates="company")
